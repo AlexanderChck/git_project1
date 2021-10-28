@@ -6,26 +6,26 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>967</width>
-    <height>727</height>
+    <width>476</width>
+    <height>355</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Добавление сотрудника</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>140</x>
-     <y>150</y>
-     <width>681</width>
-     <height>451</height>
+     <x>10</x>
+     <y>10</y>
+     <width>461</width>
+     <height>341</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -34,11 +34,11 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>ФИО</string>
+         <string>Фамилия</string>
         </property>
        </widget>
       </item>
-      <item>
+      <item row="0" column="1">
        <widget class="QLineEdit" name="name_inpt">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -48,11 +48,33 @@
         </property>
        </widget>
       </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Имя</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Отчество</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="lineEdit_2"/>
+      </item>
+      <item row="3" column="0">
        <widget class="QLabel" name="label_2">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -65,14 +87,10 @@
         </property>
        </widget>
       </item>
-      <item>
+      <item row="3" column="1">
        <widget class="QLineEdit" name="inn_inpt"/>
       </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
+      <item row="4" column="0">
        <widget class="QLabel" name="label_3">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -85,14 +103,10 @@
         </property>
        </widget>
       </item>
-      <item>
+      <item row="4" column="1">
        <widget class="QLineEdit" name="post_inpt"/>
       </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <item>
+      <item row="5" column="0">
        <widget class="QLabel" name="label_4">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -105,14 +119,7 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QLineEdit" name="dep_inpt"/>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <item>
+      <item row="6" column="0">
        <widget class="QLabel" name="label_5">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -125,14 +132,7 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QLineEdit" name="BDate_inpt"/>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_6">
-      <item>
+      <item row="7" column="0">
        <widget class="QLabel" name="label_6">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
@@ -145,14 +145,7 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QLineEdit" name="gender_inpt"/>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_7">
-      <item>
+      <item row="8" column="0">
        <widget class="QLabel" name="label_7">
         <property name="enabled">
          <bool>true</bool>
@@ -168,8 +161,35 @@
         </property>
        </widget>
       </item>
-      <item>
+      <item row="8" column="1">
        <widget class="QLineEdit" name="photo_inpt"/>
+      </item>
+      <item row="5" column="1">
+       <widget class="QComboBox" name="comboBox"/>
+      </item>
+      <item row="6" column="1">
+       <widget class="QDateEdit" name="dateEdit"/>
+      </item>
+      <item row="7" column="1">
+       <widget class="QComboBox" name="comboBox_2"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="btn_addedit">
+        <property name="text">
+         <string>Добавить</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Отменить</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
