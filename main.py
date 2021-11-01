@@ -66,7 +66,7 @@ class ScheduleWnd(QMainWindow):
             self.tblw_schedule.item(item.row(), item.column()).setBackground(QColor(0, 150,  100))
 
     def edit_emp_wnd(self):
-        self.emp_wnd = EmployeeWnd(self, emp_id=1)
+        self.emp_wnd = EmployeeWnd(self, emp_id=13)
         self.emp_wnd.show()
 
     def add_emp_wnd(self):
@@ -95,7 +95,6 @@ class EmployeeWnd(QWidget):
         else:
             self.setWindowTitle('Редактирование сотрудника')
             self.btn_addedit.setText('Изменить')
-            self.edit_emp(emp_id)
 
         self.btn_addedit.clicked.connect(self.addedit)
         self.btn_close.clicked.connect(self.close_wnd)
@@ -111,7 +110,7 @@ class EmployeeWnd(QWidget):
                     self.cbx_dep.setCurrentIndex(index)
                     #index++
 
-    # проверяем, правильно ли введён ИНН
+    # проверяем, правильно ли введён ИНН. Временно не работает
     def check_inn(self):
         inn = self.inn_inpt.text()
         if inn.isdigit() is False or len(inn) != 12:
@@ -127,17 +126,16 @@ class EmployeeWnd(QWidget):
         if fst_num != int(inn) // 10 % 10 and scd_num != int(inn) % 10:
             raise ValueError('Неправильный ИНН')
 
+    # Не работает
     def edit_emp(self, emp_id):
-        self.values.insert(0, emp_id)
         for i in range(len(self.headers)):
-            self.cur.execute("""UPDATE Employee WHERE Id = ? Set ? = ?""", (emp_id, self.headers[i], self.values[i]))
+            self.cur.execute("""UPDATE Employee Set ? = ? WHERE Id = ?""", (emp_id, self.headers[i], self.values[i],))
         self.con.commit()
 
     def add_emp(self):
         try:
-            # в values добавляем индекс добав. сотрудника
-            self.values.insert(0, id)
-            self.cur.execute("INSERT INTO Employees VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (tuple(self.values,))).fetchall()
+            self.cur.execute("INSERT INTO Employees(Sname, Name, Patronymic, Post, INN, 'DepartmentId', 'BDate',"
+                             " 'Gender')"" VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (tuple(self.values,))).fetchall()
             self.con.commit()
         except Exception as e:
             print(f'error: {e}')
@@ -156,7 +154,8 @@ class EmployeeWnd(QWidget):
             else:
                 self.add_emp()
         except Exception as e:
-            self.error_lbl.setText(f'Произошла ошибка: {e}')
+            #self.error_lbl.setText(f'Произошла ошибка: {e}')
+            print(e)
 
     # закрываем окно employer.ui
     def close_wnd(self):
