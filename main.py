@@ -25,19 +25,18 @@ class ScheduleWnd(QMainWindow):
         cur_month = dt.datetime.now().month
         months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь',
                   'Ноябрь', 'Декабрь']
+        # делаем возможным расчёт отпусков за этот год и последующие 4 годв
         for year in range(cur_year, cur_year + 5):
             self.cmb_year.addItem(str(year))
         for i in range(len(months)):
             self.cmb_month.addItem(months[i])
+            # устанавливаем в качестве стартового значения нынешний месяц
             if cur_month == i + 1:
                 self.cmb_month.setCurrentIndex(i)
 
     def fill_schedule(self):
-        headers = []
-        headers.append('Фамилия')
-        headers.append('Имя')
-        headers.append('Отчество')
-        headers.append('Должность')
+        # создаём заглавия для таблицы
+        headers = ['Должность', 'Фамилия', 'Имя', 'Отчество']
         for i in range(1, 32):
             headers.append(str(i))
         self.tblw_schedule.setColumnCount(len(headers))
@@ -59,7 +58,10 @@ class ScheduleWnd(QMainWindow):
         self.tblw_schedule.resizeColumnsToContents()
 
     def change_schedule(self, item):
-        print('row: ' + str(item.row()) + ' col: ' + str(item.column()))
+        # print используется как подсказка, в итоговом коде его не будет
+        # print('row: ' + str(item.row()) + ' col: ' + str(item.column()))
+
+        # проверяем, не выбран ли день отпуска
         if item.column() > 3:
             self.tblw_schedule.item(item.row(), item.column()).setBackground(QColor(0, 150,  100))
 
@@ -85,7 +87,8 @@ class EmployeeWnd(QWidget):
         self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
         self.cbx_gender.addItems(['М', 'Ж'])
         self.emp_id = emp_id
-        #self.fill_cbx_dep()
+        self.fill_cbx_dep()
+        # проверяем, какое действие собирается совершить пользователь
         if emp_id == 0:
             self.setWindowTitle('Добавление сотрудника')
             self.btn_addedit.setText('Добавить')
@@ -97,17 +100,23 @@ class EmployeeWnd(QWidget):
         self.btn_addedit.clicked.connect(self.addedit)
         self.btn_close.clicked.connect(self.close_wnd)
 
-    def fill_cbx_dep(self):
-        result = self.cur.execute("""SELECT Id FROM Departments""").fetchall()
+    # добавляем в cbx_dep
+    def fill_cbx_dep(self, cur_dep_id=-1):
+        result = self.cur.execute("""SELECT Id, Name FROM Departments""").fetchall()
         if len(result) > 1:
-            for id in result:
-                self.cbx_dep.addItem(id)
+            index = 0
+            for row in result:
+                self.cbx_dep.addItem(row[1], row[0])
+                if row[0] == cur_dep_id:
+                    self.cbx_dep.setCurrentIndex(index)
+                    #index++
 
+    # проверяем, правильно ли введён ИНН
     def check_inn(self):
         inn = self.inn_inpt.text()
-        if inn.isdigit() is False or len(inn) != 11:
+        if inn.isdigit() is False or len(inn) != 12:
             raise TypeError('Введённый ИНН не соответствует стандартам')
-        # Константы будут переведены
+        # Константы позже будут переведены
         FST_NUM_LST = [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
         SCD_NUM_LST = [3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
         fst_num, scd_num = 0, 0
@@ -115,26 +124,33 @@ class EmployeeWnd(QWidget):
             fst_num += int(inn[i]) * FST_NUM_LST[i]
             scd_num += int(inn[i]) * SCD_NUM_LST[i]
         scd_num += int(inn[-1]) * SCD_NUM_LST[-1]
-        if (fst_num % 11) // 10 == (scd_num % 11) // 10:
+        if fst_num != int(inn) // 10 % 10 and scd_num != int(inn) % 10:
             raise ValueError('Неправильный ИНН')
 
     def edit_emp(self, emp_id):
         self.values.insert(0, emp_id)
         for i in range(len(self.headers)):
-            self.cur.execute("""UPDATE Employee WHERE Id = ?
-            Set ? = ?""", (emp_id, self.headers[i], self.values[i]))
+            self.cur.execute("""UPDATE Employee WHERE Id = ? Set ? = ?""", (emp_id, self.headers[i], self.values[i]))
         self.con.commit()
 
     def add_emp(self):
-        self.values.insert(0, self.cur.lastrowid)
-        self.cur.execute("INSERT INTO Employees () VALUES (?)", (*self.values,))
-        self.con.commit()
+        try:
+            # в values добавляем индекс добав. сотрудника
+            self.values.insert(0, self.cur.lastrowid)
+            for i in range(len(self.headers)):
+                self.cur.execute("INSERT INTO Employees(?) VALUES (?)", (self.headers[i], self.values[i],)).fetchall()
+            self.con.commit()
+        except Exception as e:
+            print(f'error: {e}')
+            return
 
     def addedit(self):
-        self.check_inn()
+        #self.check_inn()
+        # создаём список значений виджетов employer.ui
         self.values = [self.sname_inpt.text(), self.name_inpt.text(), self.patr_inpt.text(), self.post_inpt.text(),
-                  self.inn_inpt.text(), self.cbx_dep.currentText(), self.Bdate.date(), self.cbx_gender.currentText()]
+                  self.inn_inpt.text(), self.cbx_dep.currentText(), self.Bdate_inpt.date(), self.cbx_gender.currentText()]
         try:
+            # проверяем, хочет ли пользователь редактировать данные о сотруднике
             if self.emp_id != 0:
                 self.edit_emp(self.emp_id)
             else:
@@ -142,6 +158,7 @@ class EmployeeWnd(QWidget):
         except Exception as e:
             self.error_lbl.setText(f'Произошла ошибка: {e}')
 
+    # закрываем окно employer.ui
     def close_wnd(self):
         self.close()
 
@@ -246,6 +263,7 @@ class DepartamentsWnd(QWidget):
         for row in rows:
             self.tblw_deps.removeRow(row)
 
+    # закрываем окно departs.ui
     def close_wnd(self):
         self.close()
 
