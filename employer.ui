@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>476</width>
-    <height>355</height>
+    <width>474</width>
+    <height>384</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,7 +39,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="name_inpt">
+       <widget class="QLineEdit" name="sname_inpt">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -62,7 +62,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLineEdit" name="lineEdit"/>
+       <widget class="QLineEdit" name="name_inpt"/>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_9">
@@ -72,7 +72,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit_2"/>
+       <widget class="QLineEdit" name="patr_inpt"/>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="label_2">
@@ -165,13 +165,13 @@
        <widget class="QLineEdit" name="photo_inpt"/>
       </item>
       <item row="5" column="1">
-       <widget class="QComboBox" name="comboBox"/>
+       <widget class="QComboBox" name="cbx_dep"/>
       </item>
       <item row="6" column="1">
-       <widget class="QDateEdit" name="dateEdit"/>
+       <widget class="QDateEdit" name="Bdate_inpt"/>
       </item>
       <item row="7" column="1">
-       <widget class="QComboBox" name="comboBox_2"/>
+       <widget class="QComboBox" name="cbx_gender"/>
       </item>
      </layout>
     </item>
@@ -185,7 +185,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btn_close">
         <property name="text">
          <string>Отменить</string>
         </property>
@@ -194,6 +194,19 @@
      </layout>
     </item>
    </layout>
+  </widget>
+  <widget class="QLabel" name="_error_lbl">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>360</y>
+     <width>55</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
   </widget>
  </widget>
  <resources/>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>363</height>
+    <width>491</width>
+    <height>347</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,26 +24,26 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QTableWidget" name="tableWidget"/>
+     <widget class="QTableWidget" name="tblw_deps"/>
     </item>
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btn_add">
         <property name="text">
          <string>Добавить</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="btn_del">
         <property name="text">
          <string>Удалить</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_3">
+       <widget class="QPushButton" name="btn_close">
         <property name="text">
          <string>Закрыть</string>
         </property>
