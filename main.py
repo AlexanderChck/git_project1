@@ -82,8 +82,8 @@ class EmployeeWnd(QWidget):
     def __init__(self, *args, emp_id=0):
         super().__init__()
         uic.loadUi("employer.ui", self)
-        con = sqlite3.connect("schedule_db.sqlite")
-        self.cur = con.cursor()
+        self.con = sqlite3.connect("schedule_db.sqlite")
+        self.cur = self.con.cursor()
         self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
         self.cbx_gender.addItems(['М', 'Ж'])
         self.emp_id = emp_id
@@ -136,9 +136,8 @@ class EmployeeWnd(QWidget):
     def add_emp(self):
         try:
             # в values добавляем индекс добав. сотрудника
-            self.values.insert(0, self.cur.lastrowid)
-            for i in range(len(self.headers)):
-                self.cur.execute("INSERT INTO Employees(?) VALUES (?)", (self.headers[i], self.values[i],)).fetchall()
+            self.values.insert(0, id)
+            self.cur.execute("INSERT INTO Employees VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (tuple(self.values,))).fetchall()
             self.con.commit()
         except Exception as e:
             print(f'error: {e}')
@@ -146,9 +145,10 @@ class EmployeeWnd(QWidget):
 
     def addedit(self):
         #self.check_inn()
+        date = self.Bdate_inpt.date().toString()
         # создаём список значений виджетов employer.ui
         self.values = [self.sname_inpt.text(), self.name_inpt.text(), self.patr_inpt.text(), self.post_inpt.text(),
-                  self.inn_inpt.text(), self.cbx_dep.currentText(), self.Bdate_inpt.date(), self.cbx_gender.currentText()]
+                  self.inn_inpt.text(), self.cbx_dep.currentText(), date, self.cbx_gender.currentText()]
         try:
             # проверяем, хочет ли пользователь редактировать данные о сотруднике
             if self.emp_id != 0:
