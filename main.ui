@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1067</width>
-    <height>851</height>
+    <width>1066</width>
+    <height>852</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -61,6 +61,37 @@
       </layout>
      </item>
      <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Строка поиска</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="find_line"/>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Отдел</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cbx_dep"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btn_reftbl">
+         <property name="text">
+          <string>Обновить</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
       <widget class="QTableWidget" name="tblw_schedule">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -97,7 +128,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_2">
+        <widget class="QPushButton" name="btn_print_table">
          <property name="text">
           <string>Распечатать</string>
          </property>
@@ -113,7 +144,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1067</width>
+     <width>1066</width>
      <height>26</height>
     </rect>
    </property>

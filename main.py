@@ -3,26 +3,37 @@ import sys
 import datetime as dt
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtWidgets import QApplication, QInputDialog
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QWidget, QMessageBox
 from PyQt5.QtGui import QColor
+import xlsxwriter
+# from PyQt5.uic.properties import QtGui
 
 
 class ScheduleWnd(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.sel_year = dt.datetime.now().year
+        self.sel_month = dt.datetime.now().month
+        self.sel_dep = 0
+        self.search_str = ''
         uic.loadUi("main.ui", self)
-        self.full_clndr()
-        self.tblw_schedule.itemClicked.connect(self.change_schedule)
+        # self.tblw_schedule.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.db_con = sqlite3.connect("schedule_db.sqlite")
+        self.full_clndr()
+        self.fill_deps()
+        self.tblw_schedule.itemClicked.connect(self.change_schedule)
         self.fill_schedule()
+        self.btn_reftbl.clicked.connect(self.ref_tbl)
         self.btn_editemp.clicked.connect(self.edit_emp_wnd)
         self.btn_addemp.clicked.connect(self.add_emp_wnd)
         self.btn_chngdeps.clicked.connect(self.chng_dep_wnd)
+        self.btn_print_table.clicked.connect(self.print_table)
 
     def full_clndr(self):
-        cur_year = dt.datetime.now().year
-        cur_month = dt.datetime.now().month
+        cur_year = self.sel_year
+        cur_month = self.sel_month
         months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь',
                   'Ноябрь', 'Декабрь']
         # делаем возможным расчёт отпусков за этот год и последующие 4 годв
@@ -34,26 +45,69 @@ class ScheduleWnd(QMainWindow):
             if cur_month == i + 1:
                 self.cmb_month.setCurrentIndex(i)
 
+    def fill_deps(self):
+        self.cbx_dep.addItem('Все отделы', 0)
+        cur = self.db_con.cursor()
+        result = cur.execute("""SELECT Id, Name FROM Departments""").fetchall()
+        if len(result) > 1:
+            index = 0
+            for row in result:
+                self.cbx_dep.addItem(row[1], row[0])
+                if row[0] == self.sel_dep:
+                    self.cbx_dep.setCurrentIndex(index)
+
+    def clear_schedule(self):
+        while self.tblw_schedule.columnCount() > 0:
+            self.tblw_schedule.removeColumn(0)
+        while self.tblw_schedule.rowCount() > 0:
+            self.tblw_schedule.removeRow(0)
+
     def fill_schedule(self):
+        # сначала очистим таблицу
+        self.clear_schedule()
+
+        # определим кол-во дней в выбранном месяце
+        month_start = dt.date(self.sel_year, self.sel_month, 1)
+        if self.sel_month != 12:
+            month_stop = dt.date(self.sel_year, self.sel_month + 1, 1)
+        else:
+            month_stop = dt.date(self.sel_year + 1, 1, 1)
+        count_day = (month_stop - month_start).days
+
         # создаём заглавия для таблицы
-        headers = ['Должность', 'Фамилия', 'Имя', 'Отчество']
-        for i in range(1, 32):
+        headers = ['Id', 'Фамилия', 'Имя', 'Отчество', 'Должность']
+        for i in range(1, count_day + 1):
             headers.append(str(i))
         self.tblw_schedule.setColumnCount(len(headers))
         self.tblw_schedule.setHorizontalHeaderLabels(headers)
 
         cur = self.db_con.cursor()
-        result = cur.execute("SELECT * FROM Employees").fetchall()
+        que = "SELECT Id, Sname, Name, Patronymic, Post FROM Employees WHERE 1 = 1"
+        where = []
+        if self.sel_dep != 0:
+            que += " AND DepartmentId = ?"
+            where.append(self.sel_dep)
+        if self.search_str != '':
+            que += " AND (Sname like ? OR Name like ? OR Patronymic like ? OR Post like ?)"
+            for h in range(4):
+                where.append('%' + self.search_str + '%')
+        result = cur.execute(que, tuple(where)).fetchall()
 
         for i, row in enumerate(result):
             self.tblw_schedule.setRowCount(
                 self.tblw_schedule.rowCount() + 1)
-            self.tblw_schedule.setItem(i, 0, QTableWidgetItem(row[1]))
-            self.tblw_schedule.setItem(i, 1, QTableWidgetItem(row[2]))
-            self.tblw_schedule.setItem(i, 2, QTableWidgetItem(row[3]))
-            self.tblw_schedule.setItem(i, 3, QTableWidgetItem(row[4]))
-            for j in range(4, 31 + 4):
+            self.tblw_schedule.setItem(i, 0, QTableWidgetItem(str(row[0])))
+            self.tblw_schedule.setItem(i, 1, QTableWidgetItem(str(row[1])))
+            self.tblw_schedule.setItem(i, 2, QTableWidgetItem(str(row[2])))
+            self.tblw_schedule.setItem(i, 3, QTableWidgetItem(str(row[3])))
+            self.tblw_schedule.setItem(i, 4, QTableWidgetItem(str(row[4])))
+            for j in range(5, count_day + 5):
                 self.tblw_schedule.setItem(i, j, QTableWidgetItem(''))
+                cur_day = dt.date(self.sel_year, self.sel_month, j - 4)
+                if cur_day.weekday() >= 5:
+                    self.tblw_schedule.item(i, j).setBackground(QColor(250, 128, 114))
+                else:
+                    self.tblw_schedule.item(i, j).setBackground(QColor(135, 206, 250))
 
         self.tblw_schedule.resizeColumnsToContents()
 
@@ -63,14 +117,40 @@ class ScheduleWnd(QMainWindow):
 
         # проверяем, не выбран ли день отпуска
         if item.column() > 3:
-            self.tblw_schedule.item(item.row(), item.column()).setBackground(QColor(0, 150,  100))
+            self.tblw_schedule.item(item.row(), item.column()).setBackground(QColor(144, 238, 144))
+
+    def ref_tbl(self):
+        self.sel_year = int(self.cmb_year.currentText())
+        self.sel_month = self.cmb_month.currentIndex() + 1
+        self.sel_dep = int(self.cbx_dep.itemData(self.cbx_dep.currentIndex()))
+        self.search_str = self.find_line.text()
+        self.fill_schedule()
+
+    def print_table(self):
+        name, ok_pressed = QInputDialog.getText(self, "Введите имя файла",
+                                                "Сохранить файл как:")
+        if ok_pressed:
+            workbook = xlsxwriter.Workbook(name)
+            worksheet = workbook.add_worksheet()
+
+            for i in range(self.tblw_schedule.rowCount()):
+                for j in range(self.tblw_schedule.rowCount()):
+                    worksheet.write(i, j, self.tblw_schedule.item(i, j))
+
+            workbook.close()
 
     def edit_emp_wnd(self):
-        self.emp_wnd = EmployeeWnd(self, emp_id=13)
+        rows = list(set([i.row() for i in self.tblw_schedule.selectedItems()]))
+        ids = [self.tblw_schedule.item(i, 0).text() for i in rows]
+        if len(ids) == 0:
+            return
+        self.emp_wnd = EmployeeWnd(self, emp_id=ids[0])
         self.emp_wnd.show()
 
     def add_emp_wnd(self):
         self.emp_wnd = EmployeeWnd(self)
+        self.emp_wnd.setWindowFlags(Qt.Dialog)
+        self.emp_wnd.windowModality = Qt.WindowModal
         self.emp_wnd.show()
 
     def chng_dep_wnd(self):
@@ -82,22 +162,23 @@ class EmployeeWnd(QWidget):
     def __init__(self, *args, emp_id=0):
         super().__init__()
         uic.loadUi("employer.ui", self)
+        # self.con = sqlite3.connect("schedule_db.sqlite", detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.con = sqlite3.connect("schedule_db.sqlite")
         self.cur = self.con.cursor()
         self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
-        self.cbx_gender.addItems(['М', 'Ж'])
+        self.cbx_gender.addItems(['Мужской', 'Женский'])
         self.emp_id = emp_id
-        self.fill_cbx_dep()
+        self.btn_addedit.clicked.connect(self.addedit)
+        self.btn_close.clicked.connect(self.close_wnd)
         # проверяем, какое действие собирается совершить пользователь
         if emp_id == 0:
             self.setWindowTitle('Добавление сотрудника')
             self.btn_addedit.setText('Добавить')
+            self.fill_cbx_dep()
         else:
             self.setWindowTitle('Редактирование сотрудника')
             self.btn_addedit.setText('Изменить')
-
-        self.btn_addedit.clicked.connect(self.addedit)
-        self.btn_close.clicked.connect(self.close_wnd)
+            self.full_form()
 
     # добавляем в cbx_dep
     def fill_cbx_dep(self, cur_dep_id=-1):
@@ -109,6 +190,19 @@ class EmployeeWnd(QWidget):
                 if row[0] == cur_dep_id:
                     self.cbx_dep.setCurrentIndex(index)
                     #index++
+
+    def full_form(self):
+        result = self.cur.execute("""SELECT Sname, Name, Patronymic, Post, INN, DepartmentId, BDate,
+            Gender FROM Employees WHERE Id = ?""", (self.emp_id, )).fetchall()
+        row = result[0]
+        self.sname_inpt.setText(str(row[0]))
+        self.name_inpt.setText(str(row[1]))
+        self.patr_inpt.setText(str(row[2]))
+        self.post_inpt.setText(str(row[3]))
+        self.inn_inpt.setText(str(row[4]))
+        self.fill_cbx_dep(row[5])
+        self.Bdate_inpt.setDate(QDate.fromString(row[6], Qt.ISODate))
+        self.cbx_gender.setCurrentIndex(row[7])
 
     # проверяем, правильно ли введён ИНН. Временно не работает
     def check_inn(self):
@@ -126,16 +220,15 @@ class EmployeeWnd(QWidget):
         if fst_num != int(inn) // 10 % 10 and scd_num != int(inn) % 10:
             raise ValueError('Неправильный ИНН')
 
-    # Не работает
     def edit_emp(self, emp_id):
-        for i in range(len(self.headers)):
-            self.cur.execute("""UPDATE Employee Set ? = ? WHERE Id = ?""", (emp_id, self.headers[i], self.values[i],))
+        self.cur.execute("""Update Employees set Sname = ?, Name = ?, Patronymic = ?, Post = ?, INN = ?, DepartmentId = ?,
+            BDate = ?, Gender = ? WHERE Id = ?""", (self.values[0], self.values[1], self.values[2], self.values[3],
+            self.values[4], self.values[5], self.values[6], self.values[7], emp_id, ))
         self.con.commit()
 
     def add_emp(self):
         try:
-            self.cur.execute("INSERT INTO Employees(Sname, Name, Patronymic, Post, INN, 'DepartmentId', 'BDate',"
-                             " 'Gender')"" VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (tuple(self.values,))).fetchall()
+            self.cur.execute("INSERT INTO Employees()"" VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (tuple(self.values,))).fetchall()
             self.con.commit()
         except Exception as e:
             print(f'error: {e}')
@@ -143,10 +236,11 @@ class EmployeeWnd(QWidget):
 
     def addedit(self):
         #self.check_inn()
-        date = self.Bdate_inpt.date().toString()
+        date = self.Bdate_inpt.date().toString(Qt.ISODate)
         # создаём список значений виджетов employer.ui
         self.values = [self.sname_inpt.text(), self.name_inpt.text(), self.patr_inpt.text(), self.post_inpt.text(),
-                  self.inn_inpt.text(), self.cbx_dep.currentText(), date, self.cbx_gender.currentText()]
+                  self.inn_inpt.text(), int(self.cbx_dep.itemData(self.cbx_dep.currentIndex())), date,
+                       self.cbx_gender.currentIndex()]
         try:
             # проверяем, хочет ли пользователь редактировать данные о сотруднике
             if self.emp_id != 0:
@@ -201,10 +295,6 @@ class DepartamentsWnd(QWidget):
 
 # этот метод будет вызываться при изменении любой ячейки
     def change_table(self, item):
-        # item - ячейка, которая была изменена
-        # item.row() - номер строки
-        # item.column() - номер столбца
-
         if self.ignore_change == True:
             # игнорируем изменения
             return
@@ -239,7 +329,6 @@ class DepartamentsWnd(QWidget):
         self.tblw_deps.setRowCount(self.tblw_deps.rowCount() + 1)
 
     def del_row(self):
-        # код взял из второго урока по SQL и немного изменил
         # Получаем список элементов без повторов и их id
         rows = list(set([i.row() for i in self.tblw_deps.selectedItems()]))
         ids = [self.tblw_deps.item(i, 0).text() for i in rows]
