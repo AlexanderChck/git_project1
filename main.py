@@ -7,7 +7,8 @@ from PyQt5.QtCore import Qt, QDate
 from PyQt5.QtWidgets import QApplication, QInputDialog
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QWidget, QMessageBox
 from PyQt5.QtGui import QColor
-import xlsxwriter
+# import xlsxwriter
+from collections import defaultdict
 # from PyQt5.uic.properties import QtGui
 
 
@@ -18,6 +19,9 @@ class ScheduleWnd(QMainWindow):
         self.sel_month = dt.datetime.now().month
         self.sel_dep = 0
         self.search_str = ''
+        self.schedule = {}
+        # self.count_day = {}
+        # defaultdict(lambda: 0, self.count_day)
         uic.loadUi("main.ui", self)
         # self.tblw_schedule.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.db_con = sqlite3.connect("schedule_db.sqlite")
@@ -61,6 +65,8 @@ class ScheduleWnd(QMainWindow):
             self.tblw_schedule.removeColumn(0)
         while self.tblw_schedule.rowCount() > 0:
             self.tblw_schedule.removeRow(0)
+        self.schedule = {}
+        # self.count_day = {}
 
     def fill_schedule(self):
         # сначала очистим таблицу
@@ -75,7 +81,7 @@ class ScheduleWnd(QMainWindow):
         count_day = (month_stop - month_start).days
 
         # создаём заглавия для таблицы
-        headers = ['Id', 'Фамилия', 'Имя', 'Отчество', 'Должность']
+        headers = ['Id', 'Фамилия', 'Имя', 'Отчество', 'Должность', 'Дни']
         for i in range(1, count_day + 1):
             headers.append(str(i))
         self.tblw_schedule.setColumnCount(len(headers))
@@ -94,6 +100,7 @@ class ScheduleWnd(QMainWindow):
         result = cur.execute(que, tuple(where)).fetchall()
 
         for i, row in enumerate(result):
+            self.get_schedule_by_emp(row[0], month_start, month_stop)
             self.tblw_schedule.setRowCount(
                 self.tblw_schedule.rowCount() + 1)
             self.tblw_schedule.setItem(i, 0, QTableWidgetItem(str(row[0])))
@@ -101,23 +108,51 @@ class ScheduleWnd(QMainWindow):
             self.tblw_schedule.setItem(i, 2, QTableWidgetItem(str(row[2])))
             self.tblw_schedule.setItem(i, 3, QTableWidgetItem(str(row[3])))
             self.tblw_schedule.setItem(i, 4, QTableWidgetItem(str(row[4])))
-            for j in range(5, count_day + 5):
+            self.tblw_schedule.setItem(i, 5, QTableWidgetItem('Скоро будет сделано'))
+            for j in range(6, count_day + 6):
                 self.tblw_schedule.setItem(i, j, QTableWidgetItem(''))
-                cur_day = dt.date(self.sel_year, self.sel_month, j - 4)
-                if cur_day.weekday() >= 5:
-                    self.tblw_schedule.item(i, j).setBackground(QColor(250, 128, 114))
-                else:
-                    self.tblw_schedule.item(i, j).setBackground(QColor(135, 206, 250))
+                cur_day = dt.date(self.sel_year, self.sel_month, j - 5)
+                self.tblw_schedule.item(i, j).setBackground(self.get_color(cur_day))
+                if cur_day.strftime('%Y-%m-%d') in self.schedule[row[0]]:
+                    self.tblw_schedule.item(i, j).setBackground(QColor(144, 238, 144))
 
         self.tblw_schedule.resizeColumnsToContents()
+
+    def get_color(self, date):
+        if date.weekday() >= 5:
+            return QColor(250, 128, 114)
+        return QColor(135, 206, 250)
+
+    def get_schedule_by_emp(self, emp_id, month_start, month_stop):
+        cur = self.db_con.cursor()
+        result = cur.execute("""SELECT Date FROM Schedule WHERE EmployeeId = ? AND Date >= ? AND Date < ?""",
+                             (emp_id, month_start.strftime('%Y-%m-%d'), month_stop.strftime('%Y-%m-%d'))).fetchall()
+        dates = []
+        for row in result:
+            dates.append(row[0])
+        self.schedule[emp_id] = dates
 
     def change_schedule(self, item):
         # print используется как подсказка, в итоговом коде его не будет
         # print('row: ' + str(item.row()) + ' col: ' + str(item.column()))
 
         # проверяем, не выбран ли день отпуска
-        if item.column() > 3:
-            self.tblw_schedule.item(item.row(), item.column()).setBackground(QColor(144, 238, 144))
+        if item.column() > 5:
+            id = int(self.tblw_schedule.item(item.row(), 0).text())
+            sel_day = item.column() - 5
+            sel_date = dt.date(self.sel_year, self.sel_month, sel_day)
+            cur = self.db_con.cursor()
+            if sel_date.strftime('%Y-%m-%d') not in self.schedule[id]:
+                cur.execute("INSERT INTO Schedule VALUES (?, ?)", (id, sel_date.strftime('%Y-%m-%d'))).fetchall()
+                self.db_con.commit()
+                # self.count_day[sel_day] += 1
+                self.tblw_schedule.item(item.row(), item.column()).setBackground(QColor(144, 238, 144))
+            else:
+                cur.execute("DELETE FROM Schedule WHERE EmployeeId = ? AND Date = ?",
+                            (id, sel_date.strftime('%Y-%m-%d'))).fetchall()
+                self.db_con.commit()
+                # self.count_day[sel_day] -= 1
+                self.tblw_schedule.item(item.row(), item.column()).setBackground(self.get_color(sel_date))
 
     def ref_tbl(self):
         self.sel_year = int(self.cmb_year.currentText())
