@@ -1,0 +1,110 @@
+import sqlite3
+
+from PyQt5 import uic
+from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtWidgets import QDialog
+from const import *
+
+
+class EmployeeWnd(QDialog):
+    def __init__(self, *args, emp_id=0):
+        super().__init__()
+        uic.loadUi("employer.ui", self)
+        # self.con = sqlite3.connect("schedule_db.sqlite", detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+        self.con = sqlite3.connect("schedule_db.sqlite")
+        self.cur = self.con.cursor()
+        self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
+        self.cbx_gender.addItems(['Мужской', 'Женский'])
+        self.emp_id = emp_id
+        # self.btn_addedit.clicked.connect(self.addedit)
+        self.btn_result.accepted.connect(self.addedit)
+        # self.btn_close.clicked.connect(self.close_wnd)
+        # проверяем, какое действие собирается совершить пользователь
+        if emp_id == 0:
+            self.setWindowTitle('Добавление сотрудника')
+            # self.btn_addedit.setText('Добавить')
+            self.fill_cbx_dep()
+        else:
+            self.setWindowTitle('Редактирование сотрудника')
+            # self.btn_addedit.setText('Изменить')
+            self.full_form()
+
+    # добавляем в cbx_dep
+    def fill_cbx_dep(self, cur_dep_id=-1):
+        result = self.cur.execute("""SELECT Id, Name FROM Departments""").fetchall()
+        if len(result) > 1:
+            index = 0
+            for row in result:
+                self.cbx_dep.addItem(row[1], row[0])
+                if row[0] == cur_dep_id:
+                    self.cbx_dep.setCurrentIndex(index)
+                    #index++
+
+    def full_form(self):
+        result = self.cur.execute("""SELECT Sname, Name, Patronymic, Post, INN, DepartmentId, BDate,
+            Gender FROM Employees WHERE Id = ?""", (self.emp_id, )).fetchall()
+        row = result[0]
+        self.sname_inpt.setText(str(row[0]))
+        self.name_inpt.setText(str(row[1]))
+        self.patr_inpt.setText(str(row[2]))
+        self.post_inpt.setText(str(row[3]))
+        self.inn_inpt.setText(str(row[4]))
+        self.fill_cbx_dep(row[5])
+        self.Bdate_inpt.setDate(QDate.fromString(row[6], Qt.ISODate))
+        self.cbx_gender.setCurrentIndex(row[7])
+
+    # проверяем, правильно ли введён ИНН. Временно не работает
+    def check_inn(self):
+        inn = self.inn_inpt.text()
+        if inn.isdigit() is False or len(inn) != LEN_INN:
+            raise TypeError('Введённый ИНН не соответствует стандартам')
+        # Константы позже будут переведены
+        fst_num, scd_num = 0, 0
+        for i in range(len(FST_NUM_LST)):
+            fst_num += int(inn[i]) * FST_NUM_LST[i]
+            scd_num += int(inn[i]) * SCD_NUM_LST[i]
+        scd_num += int(inn[-2]) * SCD_NUM_LST[-1]
+        fst_razr = str(fst_num % 11)[-1]
+        scd_razr = str(scd_num % 11)[-1]
+        if fst_razr != inn[-2] or scd_razr != inn[-1]:
+            raise ValueError('Неправильный ИНН')
+
+    def edit_emp(self, emp_id):
+        self.cur.execute("""Update Employees set Sname = ?, Name = ?, Patronymic = ?, Post = ?, INN = ?, DepartmentId = ?,
+            BDate = ?, Gender = ? WHERE Id = ?""", (self.values[0], self.values[1], self.values[2], self.values[3],
+            self.values[4], self.values[5], self.values[6], self.values[7], emp_id, ))
+        self.con.commit()
+
+    def add_emp(self):
+        try:
+            self.cur.execute("""INSERT INTO Employees(Sname, Name, Patronymic, Post, INN, DepartmentId, BDate, Gender)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", (tuple(self.values,))).fetchall()
+            self.con.commit()
+        except Exception as e:
+            print(f'error: {e}')
+            return
+
+    def addedit(self):
+        try:
+            self.check_inn()
+        except Exception as e:
+            print(f'ошибка {e}')
+            return
+        date = self.Bdate_inpt.date().toString(Qt.ISODate)
+        # создаём список значений виджетов employer.ui
+        self.values = [self.sname_inpt.text(), self.name_inpt.text(), self.patr_inpt.text(), self.post_inpt.text(),
+                  self.inn_inpt.text(), int(self.cbx_dep.itemData(self.cbx_dep.currentIndex())), date,
+                       self.cbx_gender.currentIndex()]
+        try:
+            # проверяем, хочет ли пользователь редактировать данные о сотруднике
+            if self.emp_id != 0:
+                self.edit_emp(self.emp_id)
+            else:
+                self.add_emp()
+        except Exception as e:
+            #self.error_lbl.setText(f'Произошла ошибка: {e}')
+            print(e)
+
+    # закрываем окно employer.ui
+    # def close_wnd(self):
+    #    self.close()
