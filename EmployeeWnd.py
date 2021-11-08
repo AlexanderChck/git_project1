@@ -13,24 +13,20 @@ class EmployeeWnd(QDialog):
         self.con = sqlite3.connect("schedule_db.sqlite")
         self.cur = self.con.cursor()
         self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
-        self.cbx_gender.addItems(['Мужской', 'Женский'])
+        self.cbx_gender.addItems(GENDER)
         self.emp_id = emp_id
-        # self.btn_addedit.clicked.connect(self.addedit)
         self.btn_result.accepted.connect(self.addedit)
-        # self.btn_close.clicked.connect(self.close_wnd)
         # проверяем, какое действие собирается совершить пользователь
         if emp_id == 0:
-            self.setWindowTitle('Добавление сотрудника')
-            # self.btn_addedit.setText('Добавить')
+            self.setWindowTitle(ADDBTN_NAME)
             self.fill_cbx_dep()
         else:
-            self.setWindowTitle('Редактирование сотрудника')
-            # self.btn_addedit.setText('Изменить')
+            self.setWindowTitle(EDITBTN_DATE)
             self.full_form()
 
     # добавляем в cbx_dep
     def fill_cbx_dep(self, cur_dep_id=-1):
-        result = self.cur.execute("""SELECT Id, Name FROM Departments""").fetchall()
+        result = self.cur.execute(FOUND_DEP_NAME).fetchall()
         if len(result) > 1:
             index = 0
             for row in result:
@@ -39,8 +35,7 @@ class EmployeeWnd(QDialog):
                     self.cbx_dep.setCurrentIndex(index)
 
     def full_form(self):
-        result = self.cur.execute("""SELECT Sname, Name, Patronymic, Post, INN, DepartmentId, BDate,
-            Gender FROM Employees WHERE Id = ?""", (self.emp_id, )).fetchall()
+        result = self.cur.execute(FULL_FORM, (self.emp_id, )).fetchall()
         row = result[0]
         self.sname_inpt.setText(str(row[0]))
         self.name_inpt.setText(str(row[1]))
@@ -68,15 +63,13 @@ class EmployeeWnd(QDialog):
             raise ValueError('Неправильный ИНН')
 
     def edit_emp(self, emp_id):
-        self.cur.execute("""Update Employees set Sname = ?, Name = ?, Patronymic = ?, Post = ?, INN = ?, DepartmentId = ?,
-            BDate = ?, Gender = ? WHERE Id = ?""", (self.values[0], self.values[1], self.values[2], self.values[3],
+        self.cur.execute(EDIT_EMP, (self.values[0], self.values[1], self.values[2], self.values[3],
             self.values[4], self.values[5], self.values[6], self.values[7], emp_id, ))
         self.con.commit()
 
     def add_emp(self):
         try:
-            self.cur.execute("""INSERT INTO Employees(Sname, Name, Patronymic, Post, INN, DepartmentId, BDate, Gender)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", (tuple(self.values,))).fetchall()
+            self.cur.execute(ADD_EMP, (tuple(self.values,))).fetchall()
             self.con.commit()
         except Exception as e:
             print(f'error: {e}')

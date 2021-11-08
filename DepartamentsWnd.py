@@ -2,6 +2,7 @@ import sqlite3
 
 from PyQt5 import uic
 from PyQt5.QtWidgets import QTableWidgetItem, QWidget, QMessageBox
+from const import *
 
 
 class DepartamentsWnd(QWidget):
@@ -19,16 +20,15 @@ class DepartamentsWnd(QWidget):
     def fill_table(self):
         self.ignore_change = True
         # заполним заголовки в таблице
-        headers = ['Id', 'Name']
         # заголовок с Id мы скроем, пользователю не нужно его показывать
         # а нам он нужен, мы ез него будем вытаскивать Id записи для изменения и удаления в базе
-        self.tblw_deps.setColumnCount(len(headers))
-        self.tblw_deps.setHorizontalHeaderLabels(headers)
+        self.tblw_deps.setColumnCount(len(DEP_HEADERS))
+        self.tblw_deps.setHorizontalHeaderLabels(DEP_HEADERS)
         # скроем первый столбец
         self.tblw_deps.hideColumn(0)
 
         cur = self.con.cursor()
-        result = cur.execute("SELECT Id, Name FROM Departments").fetchall()
+        result = cur.execute(SELECT_DEP_NAME).fetchall()
 
         # цикл по записям, которые нам вернул запрос
         for i, row in enumerate(result):
@@ -60,7 +60,7 @@ class DepartamentsWnd(QWidget):
 
         # если в Id пустая строка, значит нужно добавить новую запись в базу
         if len(id) == 0:
-            cur.execute("INSERT INTO Departments (Name) VALUES (?)", (item.text(),))
+            cur.execute(ADD_WEEKEND, (item.text(),))
             self.con.commit()
             # получим id добавленной записи
             id = cur.lastrowid
@@ -84,7 +84,7 @@ class DepartamentsWnd(QWidget):
             return
         # Спрашиваем у пользователя подтверждение на удаление элементов
         valid = QMessageBox.question(
-            self, '', "Действительно удалить выбранные отделы?",
+            self, '', MESSEGE,
             QMessageBox.Yes, QMessageBox.No)
         # Если пользователь ответил утвердительно, удаляем элементы.
         # Не забываем зафиксировать изменения

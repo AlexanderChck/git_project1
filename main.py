@@ -35,20 +35,18 @@ class ScheduleWnd(QMainWindow):
     def full_clndr(self):
         cur_year = self.sel_year
         cur_month = self.sel_month
-        months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь',
-                  'Ноябрь', 'Декабрь']
         # делаем возможным расчёт отпусков за этот год и последующие 4 годв
         for year in range(cur_year, cur_year + 5):
             self.cmb_year.addItem(str(year))
-        for i in range(len(months)):
-            self.cmb_month.addItem(months[i])
+        for i in range(len(MONTH)):
+            self.cmb_month.addItem(MONTH[i])
             # устанавливаем в качестве стартового значения нынешний месяц
             if cur_month == i + 1:
                 self.cmb_month.setCurrentIndex(i)
 
     def fill_deps(self):
-        self.cbx_dep.addItem('Все отделы', 0)
-        result = self.cur.execute("""SELECT Id, Name FROM Departments""").fetchall()
+        self.cbx_dep.addItem(ALL_DEPS, 0)
+        result = self.cur.execute(FOUND_DEP_NAME).fetchall()
         if len(result) > 1:
             index = 0
             for row in result:
@@ -109,7 +107,7 @@ class ScheduleWnd(QMainWindow):
                 self.tblw_schedule.setItem(i, j, QTableWidgetItem(''))
                 cur_day = dt.date(self.sel_year, self.sel_month, j - 5)
                 self.tblw_schedule.item(i, j).setBackground(self.get_color(cur_day))
-                if cur_day.strftime('%Y-%m-%d') in self.schedule[row[0]]:
+                if cur_day.strftime(YEAR_FORMAT) in self.schedule[row[0]]:
                     self.tblw_schedule.setItem(i, j, QTableWidgetItem('x'))
                     self.tblw_schedule.item(i, j).setBackground(GREEN)
 
@@ -121,8 +119,8 @@ class ScheduleWnd(QMainWindow):
         return BLUE
 
     def get_schedule_by_emp(self, emp_id, month_start, month_stop):
-        result = self.cur.execute("""SELECT Date FROM Schedule WHERE EmployeeId = ? AND Date >= ? AND Date < ?""",
-                    (emp_id, month_start.strftime('%Y-%m-%d'), month_stop.strftime('%Y-%m-%d'))).fetchall()
+        result = self.cur.execute(FOUND_DATE,
+                    (emp_id, month_start.strftime(YEAR_FORMAT), month_stop.strftime(YEAR_FORMAT))).fetchall()
         dates = []
         for row in result:
             dates.append(row[0])
@@ -141,21 +139,21 @@ class ScheduleWnd(QMainWindow):
             sel_day = item.column() - 5
             sel_date = dt.date(self.sel_year, self.sel_month, sel_day)
             cur = self.db_con.cursor()
-            if sel_date.strftime('%Y-%m-%d') not in self.schedule[id]:
+            if sel_date.strftime(YEAR_FORMAT) not in self.schedule[id]:
                 if self.count_day[id] < 28:
-                    cur.execute("INSERT INTO Schedule VALUES (?, ?)", (id, sel_date.strftime('%Y-%m-%d'))).fetchall()
+                    cur.execute(ADD_WEEKEND, (id, sel_date.strftime(YEAR_FORMAT))).fetchall()
                     self.db_con.commit()
                     self.tblw_schedule.item(item.row(), item.column()).setText('x')
                     self.tblw_schedule.item(item.row(), item.column()).setBackground(GREEN)
-                    self.schedule[id].append(sel_date.strftime('%Y-%m-%d'))
+                    self.schedule[id].append(sel_date.strftime(YEAR_FORMAT))
                     self.count_day[id] += 1
             else:
-                cur.execute("DELETE FROM Schedule WHERE EmployeeId = ? AND Date = ?",
-                            (id, sel_date.strftime('%Y-%m-%d'))).fetchall()
+                cur.execute(DELETE_WEEKEND,
+                            (id, sel_date.strftime(YEAR_FORMAT))).fetchall()
                 self.db_con.commit()
                 self.tblw_schedule.item(item.row(), item.column()).setText('')
                 self.tblw_schedule.item(item.row(), item.column()).setBackground(self.get_color(sel_date))
-                self.schedule[id].remove(sel_date.strftime('%Y-%m-%d'))
+                self.schedule[id].remove(sel_date.strftime(YEAR_FORMAT))
                 self.count_day[id] -= 1
             self.tblw_schedule.setItem(item.row(), 5, QTableWidgetItem(str(self.count_day[id])))
 
