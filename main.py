@@ -19,8 +19,8 @@ class ScheduleWnd(QMainWindow):
         self.search_str = ''
         self.schedule = {}
         self.count_day = {}
-        uic.loadUi("main.ui", self)
-        self.db_con = sqlite3.connect("schedule_db.sqlite")
+        uic.loadUi("dist/main.ui", self)
+        self.db_con = sqlite3.connect("dist/schedule_db.sqlite")
         self.cur = self.db_con.cursor()
         self.full_clndr()
         self.fill_deps()

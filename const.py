@@ -18,12 +18,12 @@ EDITBTN_DATE = 'Редактирование сотрудника'
 FULL_FORM = """SELECT Sname, Name, Patronymic, Post, INN, DepartmentId, BDate, Gender FROM Employees WHERE Id = ?"""
 EDIT_EMP = """Update Employees set Sname = ?, Name = ?, Patronymic = ?, Post = ?, INN = ?, DepartmentId = ?, 
             BDate = ?, Gender = ? WHERE Id = ?"""
-ADD_EMP = """INSERT INTO Employees(Sname, Name, Patronymic, Post, INN, DepartmentId, BDate, Gender)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
+ADD_EMP = """INSERT INTO Employees(Sname, Name, Patronymic, Post, INN, DepartmentId, BDate, Gender)VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 LEN_INN = 12
 FST_NUM_LST = [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 SCD_NUM_LST = [3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 DEP_HEADERS = ['Id', 'Name']
 SELECT_DEP_NAME = "SELECT Id, Name FROM Departments"
 ADD_DEP = "INSERT INTO Departments (Name) VALUES (?)"
+SET_NEW_NAME = "UPDATE Departments SET Name = ? WHERE Id = ?"
 MESSEGE = "Действительно удалить выбранные отделы?"

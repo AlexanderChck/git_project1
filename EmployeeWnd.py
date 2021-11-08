@@ -9,8 +9,8 @@ from const import *
 class EmployeeWnd(QDialog):
     def __init__(self, *args, emp_id=0):
         super().__init__()
-        uic.loadUi("employer.ui", self)
-        self.con = sqlite3.connect("schedule_db.sqlite")
+        uic.loadUi("dist/employer.ui", self)
+        self.con = sqlite3.connect("dist/schedule_db.sqlite")
         self.cur = self.con.cursor()
         self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
         self.cbx_gender.addItems(GENDER)

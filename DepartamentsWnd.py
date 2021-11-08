@@ -9,12 +9,12 @@ class DepartamentsWnd(QWidget):
     def __init__(self, *args):
         super().__init__()
         self.ignore_change = False
-        uic.loadUi("departs.ui", self)
+        uic.loadUi("dist/departs.ui", self)
         self.tblw_deps.itemChanged.connect(self.change_table)
         self.btn_add.clicked.connect(self.add_row)
         self.btn_del.clicked.connect(self.del_row)
         self.btn_close.clicked.connect(self.close_wnd)
-        self.con = sqlite3.connect("schedule_db.sqlite")
+        self.con = sqlite3.connect("dist/schedule_db.sqlite")
         self.fill_table()
 
     def fill_table(self):
@@ -69,7 +69,7 @@ class DepartamentsWnd(QWidget):
         # если Id не пустой, нужно отредактировать значение в базе
         else:
             id = int(id)
-            cur.execute("UPDATE Departments SET Name = ? WHERE Id = ?", (item.text(), id))
+            cur.execute(SET_NEW_NAME, (item.text(), id))
             self.con.commit()
 
     def add_row(self):
