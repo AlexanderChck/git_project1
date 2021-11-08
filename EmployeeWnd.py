@@ -10,7 +10,6 @@ class EmployeeWnd(QDialog):
     def __init__(self, *args, emp_id=0):
         super().__init__()
         uic.loadUi("employer.ui", self)
-        # self.con = sqlite3.connect("schedule_db.sqlite", detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self.con = sqlite3.connect("schedule_db.sqlite")
         self.cur = self.con.cursor()
         self.headers = ['Id', 'Sname', 'Name', 'Patronymic', 'Post', 'INN', 'DepartmentId', 'BDate', 'Gender']
@@ -38,7 +37,6 @@ class EmployeeWnd(QDialog):
                 self.cbx_dep.addItem(row[1], row[0])
                 if row[0] == cur_dep_id:
                     self.cbx_dep.setCurrentIndex(index)
-                    #index++
 
     def full_form(self):
         result = self.cur.execute("""SELECT Sname, Name, Patronymic, Post, INN, DepartmentId, BDate,
@@ -93,8 +91,7 @@ class EmployeeWnd(QDialog):
         date = self.Bdate_inpt.date().toString(Qt.ISODate)
         # создаём список значений виджетов employer.ui
         self.values = [self.sname_inpt.text(), self.name_inpt.text(), self.patr_inpt.text(), self.post_inpt.text(),
-                  self.inn_inpt.text(), int(self.cbx_dep.itemData(self.cbx_dep.currentIndex())), date,
-                       self.cbx_gender.currentIndex()]
+                  self.inn_inpt.text(), int(self.cbx_dep.itemData(self.cbx_dep.currentIndex())), date, self.cbx_gender.currentIndex()]
         try:
             # проверяем, хочет ли пользователь редактировать данные о сотруднике
             if self.emp_id != 0:
@@ -102,9 +99,4 @@ class EmployeeWnd(QDialog):
             else:
                 self.add_emp()
         except Exception as e:
-            #self.error_lbl.setText(f'Произошла ошибка: {e}')
             print(e)
-
-    # закрываем окно employer.ui
-    # def close_wnd(self):
-    #    self.close()

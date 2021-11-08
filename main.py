@@ -1,10 +1,9 @@
-import sqlite3
 import sys
 import datetime as dt
 
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QInputDialog
-from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow
 from EmployeeWnd import *
 from DepartamentsWnd import *
 from const import *
@@ -21,7 +20,6 @@ class ScheduleWnd(QMainWindow):
         self.schedule = {}
         self.count_day = {}
         uic.loadUi("main.ui", self)
-        # self.tblw_schedule.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.db_con = sqlite3.connect("schedule_db.sqlite")
         self.cur = self.db_con.cursor()
         self.full_clndr()
@@ -115,7 +113,6 @@ class ScheduleWnd(QMainWindow):
                     self.tblw_schedule.setItem(i, j, QTableWidgetItem('x'))
                     self.tblw_schedule.item(i, j).setBackground(GREEN)
 
-
         self.tblw_schedule.resizeColumnsToContents()
 
     def get_color(self, date):
@@ -125,7 +122,7 @@ class ScheduleWnd(QMainWindow):
 
     def get_schedule_by_emp(self, emp_id, month_start, month_stop):
         result = self.cur.execute("""SELECT Date FROM Schedule WHERE EmployeeId = ? AND Date >= ? AND Date < ?""",
-                             (emp_id, month_start.strftime('%Y-%m-%d'), month_stop.strftime('%Y-%m-%d'))).fetchall()
+                    (emp_id, month_start.strftime('%Y-%m-%d'), month_stop.strftime('%Y-%m-%d'))).fetchall()
         dates = []
         for row in result:
             dates.append(row[0])
@@ -138,9 +135,6 @@ class ScheduleWnd(QMainWindow):
         self.count_day[emp_id] = result[0][0]
 
     def change_schedule(self, item):
-        # print используется как подсказка, в итоговом коде его не будет
-        # print('row: ' + str(item.row()) + ' col: ' + str(item.column()))
-
         # проверяем, не выбран ли день отпуска
         if item.column() > 5:
             id = int(self.tblw_schedule.item(item.row(), 0).text())
@@ -208,6 +202,7 @@ class ScheduleWnd(QMainWindow):
     def chng_dep_wnd(self):
         self.dep_wnd = DepartamentsWnd(self)
         self.dep_wnd.show()
+
 
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)

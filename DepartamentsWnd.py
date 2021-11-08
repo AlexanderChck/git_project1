@@ -43,7 +43,7 @@ class DepartamentsWnd(QWidget):
 
 # этот метод будет вызываться при изменении любой ячейки
     def change_table(self, item):
-        if self.ignore_change == True:
+        if self.ignore_change is True:
             # игнорируем изменения
             return
         if item.column() == 0:
