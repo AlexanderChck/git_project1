@@ -60,7 +60,7 @@ class DepartamentsWnd(QWidget):
 
         # если в Id пустая строка, значит нужно добавить новую запись в базу
         if len(id) == 0:
-            cur.execute(ADD_WEEKEND, (item.text(),))
+            cur.execute(ADD_DEP, (item.text(),))
             self.con.commit()
             # получим id добавленной записи
             id = cur.lastrowid
